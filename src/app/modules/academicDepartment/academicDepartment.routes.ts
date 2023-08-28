@@ -7,32 +7,28 @@ import { AcademicDepartmentValidation } from './academicDepartment.validations';
 
 const router = express.Router();
 
+router.get('/', AcademicDepartmentController.getAllFromDB);
+router.get('/:id', AcademicDepartmentController.getByIdFromDB);
+
 router.post(
-  '/create-department',
-  validateRequest(
-    AcademicDepartmentValidation.createAcademicDepartmentZodSchema
-  ),
-  auth(ENUM_USER_ROLE.SUPER_ADMIN, ENUM_USER_ROLE.ADMIN),
-  AcademicDepartmentController.createDepartment
+    '/',
+    validateRequest(AcademicDepartmentValidation.create),
+    auth(ENUM_USER_ROLE.SUPER_ADMIN, ENUM_USER_ROLE.ADMIN),
+    AcademicDepartmentController.insertIntoDB
 );
 
-router.get('/:id', AcademicDepartmentController.getSingleDepartment);
-
-router.get('/', AcademicDepartmentController.getAllDepartments);
-
 router.patch(
-  '/:id',
-  validateRequest(
-    AcademicDepartmentValidation.updateAcademicDepartmentZodSchema
-  ),
-  auth(ENUM_USER_ROLE.SUPER_ADMIN, ENUM_USER_ROLE.ADMIN),
-  AcademicDepartmentController.updateDepartment
+    '/:id',
+    validateRequest(AcademicDepartmentValidation.update),
+    auth(ENUM_USER_ROLE.SUPER_ADMIN, ENUM_USER_ROLE.ADMIN),
+    AcademicDepartmentController.updateOneInDB
 );
 
 router.delete(
-  '/:id',
-  auth(ENUM_USER_ROLE.SUPER_ADMIN),
-  AcademicDepartmentController.deleteDepartment
+    '/:id',
+    auth(ENUM_USER_ROLE.SUPER_ADMIN, ENUM_USER_ROLE.ADMIN),
+    AcademicDepartmentController.deleteByIdFromDB
 );
 
-export const AcademicDepartmentRoutes = router;
+
+export const academicDepartmentRoutes = router;

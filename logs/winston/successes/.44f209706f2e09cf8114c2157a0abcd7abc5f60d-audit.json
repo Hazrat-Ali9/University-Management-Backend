@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "E:\\MERN-Web Development 2.0\\MileStone-3\\University-Management-Project\\logs\\winston\\successes\\.44f209706f2e09cf8114c2157a0abcd7abc5f60d-audit.json",
+    "files": [
+        {
+            "date": 1693238511017,
+            "name": "E:\\MERN-Web Development 2.0\\MileStone-3\\University-Management-Project\\logs\\winston\\successes\\phu-2023-28-08-22-success.log",
+            "hash": "5eeb0cc80ff7c71e597b775ad29c513a785b3597b3ace93648c7b136e1c123bc"
+        }
+    ],
+    "hashType": "sha256"
+}

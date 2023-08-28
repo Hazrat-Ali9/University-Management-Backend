@@ -1,107 +1,115 @@
-import { SortOrder } from 'mongoose';
+import { AcademicFaculty, Prisma } from '@prisma/client';
 import { paginationHelpers } from '../../../helpers/paginationHelper';
 import { IGenericResponse } from '../../../interfaces/common';
 import { IPaginationOptions } from '../../../interfaces/pagination';
-import { academicFacultySearchableFields } from './academicFaculty.constants';
+import prisma from '../../../shared/prisma';
 import {
-  IAcademicFaculty,
-  IAcademicFacultyFilters,
-} from './academicFaculty.interfaces';
-import { AcademicFaculty } from './academicFaculty.model';
+    academicFacultySearchableFields
+} from './academicFaculty.constants';
+import { IAcademicFacultyFilterRequest } from './academicFaculty.interface';
 
-const createFaculty = async (payload: IAcademicFaculty) => {
-  const result = await AcademicFaculty.create(payload);
-  return result;
+const insertIntoDB = async (data: AcademicFaculty): Promise<AcademicFaculty> => {
+    const result = await prisma.academicFaculty.create({
+        data
+    });
+
+    return result;
 };
 
-const getSingleFaculty = async (
-  id: string
-): Promise<IAcademicFaculty | null> => {
-  const result = await AcademicFaculty.findById(id);
-  return result;
-};
+const getAllFromDB = async (
+    filters: IAcademicFacultyFilterRequest,
+    options: IPaginationOptions
+): Promise<IGenericResponse<AcademicFaculty[]>> => {
+    const { limit, page, skip } = paginationHelpers.calculatePagination(options);
+    const { searchTerm, ...filterData } = filters;
 
-const getAllFaculties = async (
-  filters: IAcademicFacultyFilters,
-  paginationOptions: IPaginationOptions
-): Promise<IGenericResponse<IAcademicFaculty[]>> => {
-  // Extract searchTerm to implement search query
-  const { searchTerm, ...filtersData } = filters;
+    const andConditions = [];
 
-  const { page, limit, skip, sortBy, sortOrder } =
-    paginationHelpers.calculatePagination(paginationOptions);
+    if (searchTerm) {
+        andConditions.push({
+            OR: academicFacultySearchableFields.map((field) => ({
+                [field]: {
+                    contains: searchTerm,
+                    mode: 'insensitive'
+                }
+            }))
+        });
+    }
 
-  const andConditions = [];
+    if (Object.keys(filterData).length > 0) {
+        andConditions.push({
+            AND: Object.keys(filterData).map((key) => ({
+                [key]: {
+                    equals: (filterData as any)[key]
+                }
+            }))
+        });
+    }
 
-  // Search needs $or for searching in specified fields
-  if (searchTerm) {
-    andConditions.push({
-      $or: academicFacultySearchableFields.map(field => ({
-        [field]: {
-          $regex: searchTerm,
-          $options: 'i',
+    const whereConditions: Prisma.AcademicFacultyWhereInput =
+        andConditions.length > 0 ? { AND: andConditions } : {};
+
+    const result = await prisma.academicFaculty.findMany({
+        where: whereConditions,
+        skip,
+        take: limit,
+        orderBy:
+            options.sortBy && options.sortOrder
+                ? { [options.sortBy]: options.sortOrder }
+                : {
+                    createdAt: 'desc'
+                }
+    });
+    const total = await prisma.academicFaculty.count({
+        where: whereConditions
+    });
+
+    return {
+        meta: {
+            total,
+            page,
+            limit
         },
-      })),
+        data: result
+    };
+};
+
+const getByIdFromDB = async (id: string): Promise<AcademicFaculty | null> => {
+    const result = await prisma.academicFaculty.findUnique({
+        where: {
+            id
+        }
     });
-  }
+    return result;
+};
 
-  // Filters needs $and to fullfill all the conditions
-  if (Object.keys(filtersData).length) {
-    andConditions.push({
-      $and: Object.entries(filtersData).map(([field, value]) => ({
-        [field]: value,
-      })),
+const updateOneInDB = async (
+    id: string,
+    payload: Partial<AcademicFaculty>
+): Promise<AcademicFaculty> => {
+    const result = await prisma.academicFaculty.update({
+        where: {
+            id
+        },
+        data: payload
     });
-  }
-
-  // Dynamic sort needs  fields to  do sorting
-  const sortConditions: { [key: string]: SortOrder } = {};
-  if (sortBy && sortOrder) {
-    sortConditions[sortBy] = sortOrder;
-  }
-
-  // If there is no condition , put {} to give all data
-  const whereConditions =
-    andConditions.length > 0 ? { $and: andConditions } : {};
-
-  const result = await AcademicFaculty.find(whereConditions)
-    .sort(sortConditions)
-    .skip(skip)
-    .limit(limit);
-
-  const total = await AcademicFaculty.countDocuments(whereConditions);
-
-  return {
-    meta: {
-      page,
-      limit,
-      total,
-    },
-    data: result,
-  };
+    return result;
 };
 
-const updateFaculty = async (
-  id: string,
-  payload: Partial<IAcademicFaculty>
-): Promise<IAcademicFaculty | null> => {
-  const result = await AcademicFaculty.findOneAndUpdate({ _id: id }, payload, {
-    new: true,
-  });
-  return result;
+const deleteByIdFromDB = async (id: string): Promise<AcademicFaculty> => {
+    const result = await prisma.academicFaculty.delete({
+        where: {
+            id
+        }
+    });
+    return result;
 };
 
-const deleteByIdFromDB = async (
-  id: string
-): Promise<IAcademicFaculty | null> => {
-  const result = await AcademicFaculty.findByIdAndDelete(id);
-  return result;
-};
 
 export const AcademicFacultyService = {
-  createFaculty,
-  getAllFaculties,
-  getSingleFaculty,
-  updateFaculty,
-  deleteByIdFromDB,
+    insertIntoDB,
+    getAllFromDB,
+    getByIdFromDB,
+    updateOneInDB,
+    deleteByIdFromDB
 };

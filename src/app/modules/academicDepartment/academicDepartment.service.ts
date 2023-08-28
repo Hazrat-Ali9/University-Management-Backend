@@ -1,120 +1,137 @@
-import { SortOrder } from 'mongoose';
+import { AcademicDepartment, Prisma } from '@prisma/client';
 import { paginationHelpers } from '../../../helpers/paginationHelper';
 import { IGenericResponse } from '../../../interfaces/common';
 import { IPaginationOptions } from '../../../interfaces/pagination';
-import { academicDepartmentSearchableFields } from './academicDepartment.constants';
-import {
-  IAcademicDepartment,
-  IAcademicDepartmentFilters,
-} from './academicDepartment.interfaces';
-import { AcademicDepartment } from './academicDepartment.model';
+import prisma from '../../../shared/prisma';
+import { academicDepartmentRelationalFields, academicDepartmentRelationalFieldsMapper, academicDepartmentSearchableFields } from './academicDepartment.contants';
+import { IAcademicDepartmentFilterRequest } from './academicDepartment.interface';
 
-const createDepartment = async (
-  payload: IAcademicDepartment
-): Promise<IAcademicDepartment | null> => {
-  const result = (await AcademicDepartment.create(payload)).populate(
-    'academicFaculty'
-  );
-  return result;
-};
-
-const getSingleDepartment = async (
-  id: string
-): Promise<IAcademicDepartment | null> => {
-  const result = await AcademicDepartment.findById(id).populate(
-    'academicFaculty'
-  );
-
-  return result;
-};
-
-const getAllDepartments = async (
-  filters: IAcademicDepartmentFilters,
-  paginationOptions: IPaginationOptions
-): Promise<IGenericResponse<IAcademicDepartment[]>> => {
-  const { limit, page, skip, sortBy, sortOrder } =
-    paginationHelpers.calculatePagination(paginationOptions);
-
-  // Extract searchTerm to implement search query
-  const { searchTerm, ...filtersData } = filters;
-
-  const andConditions = [];
-
-  // Search needs $or for searching in specified fields
-  if (searchTerm) {
-    andConditions.push({
-      $or: academicDepartmentSearchableFields.map(field => ({
-        [field]: {
-          $regex: searchTerm,
-          $paginationOptions: 'i',
-        },
-      })),
+const insertIntoDB = async (data: AcademicDepartment): Promise<AcademicDepartment> => {
+    const result = await prisma.academicDepartment.create({
+        data,
+        include: {
+            academicFaculty: true
+        }
     });
-  }
 
-  // Filters needs $and to fullfill all the conditions
-  if (Object.keys(filtersData).length) {
-    andConditions.push({
-      $and: Object.entries(filtersData).map(([field, value]) => ({
-        [field]: value,
-      })),
-    });
-  }
-
-  // Dynamic  Sort needs  field to  do sorting
-  const sortConditions: { [key: string]: SortOrder } = {};
-  if (sortBy && sortOrder) {
-    sortConditions[sortBy] = sortOrder;
-  }
-
-  // If there is no condition , put {} to give all data
-  const whereConditions =
-    andConditions.length > 0 ? { $and: andConditions } : {};
-
-  const result = await AcademicDepartment.find(whereConditions)
-    .populate('academicFaculty')
-    .sort(sortConditions)
-    .skip(skip)
-    .limit(limit);
-
-  const total = await AcademicDepartment.countDocuments(whereConditions);
-
-  return {
-    meta: {
-      page,
-      limit,
-      total,
-    },
-    data: result,
-  };
+    return result;
 };
 
-const updateDepartment = async (
-  id: string,
-  payload: Partial<IAcademicDepartment>
-): Promise<IAcademicDepartment | null> => {
-  const result = await AcademicDepartment.findOneAndUpdate(
-    { _id: id },
-    payload,
-    {
-      new: true,
+const getAllFromDB = async (
+    filters: IAcademicDepartmentFilterRequest,
+    options: IPaginationOptions
+): Promise<IGenericResponse<AcademicDepartment[]>> => {
+    const { limit, page, skip } = paginationHelpers.calculatePagination(options);
+    const { searchTerm, ...filterData } = filters;
+
+    const andConditions = [];
+
+    if (searchTerm) {
+        andConditions.push({
+            OR: academicDepartmentSearchableFields.map((field) => ({
+                [field]: {
+                    contains: searchTerm,
+                    mode: 'insensitive'
+                }
+            }))
+        });
     }
-  ).populate('academicFaculty');
 
-  return result;
+    if (Object.keys(filterData).length > 0) {
+        andConditions.push({
+            AND: Object.keys(filterData).map((key) => {
+                if (academicDepartmentRelationalFields.includes(key)) {
+                    return {
+                        [academicDepartmentRelationalFieldsMapper[key]]: {
+                            id: (filterData as any)[key]
+                        }
+                    };
+                } else {
+                    return {
+                        [key]: {
+                            equals: (filterData as any)[key]
+                        }
+                    };
+                }
+            })
+        });
+    }
+
+    const whereConditions: Prisma.AcademicDepartmentWhereInput =
+        andConditions.length > 0 ? { AND: andConditions } : {};
+
+    const result = await prisma.academicDepartment.findMany({
+        include: {
+            academicFaculty: true
+        },
+        where: whereConditions,
+        skip,
+        take: limit,
+        orderBy:
+            options.sortBy && options.sortOrder
+                ? { [options.sortBy]: options.sortOrder }
+                : {
+                    createdAt: 'desc'
+                }
+    });
+    const total = await prisma.academicDepartment.count({
+        where: whereConditions
+    });
+
+    return {
+        meta: {
+            total,
+            page,
+            limit
+        },
+        data: result
+    };
 };
 
-const deleteDepartment = async (
-  id: string
-): Promise<IAcademicDepartment | null> => {
-  const result = await AcademicDepartment.findByIdAndDelete(id);
-  return result;
+const getByIdFromDB = async (id: string): Promise<AcademicDepartment | null> => {
+    const result = await prisma.academicDepartment.findUnique({
+        where: {
+            id
+        },
+        include: {
+            academicFaculty: true
+        }
+    });
+    return result;
+};
+
+const updateOneInDB = async (
+    id: string,
+    payload: Partial<AcademicDepartment>
+): Promise<AcademicDepartment> => {
+    const result = await prisma.academicDepartment.update({
+        where: {
+            id
+        },
+        data: payload,
+        include: {
+            academicFaculty: true
+        }
+    });
+    return result;
+};
+
+const deleteByIdFromDB = async (id: string): Promise<AcademicDepartment> => {
+    const result = await prisma.academicDepartment.delete({
+        where: {
+            id
+        },
+        include: {
+            academicFaculty: true
+        }
+    });
+    return result;
 };
 
 export const AcademicDepartmentService = {
-  createDepartment,
-  getSingleDepartment,
-  getAllDepartments,
-  updateDepartment,
-  deleteDepartment,
+    insertIntoDB,
+    getAllFromDB,
+    getByIdFromDB,
+    updateOneInDB,
+    deleteByIdFromDB
 };

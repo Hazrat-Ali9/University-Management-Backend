@@ -1,120 +1,121 @@
-import httpStatus from 'http-status';
-import { SortOrder } from 'mongoose';
-import ApiError from '../../../errors/ApiError';
-import { paginationHelpers } from '../../../helpers/paginationHelper';
-import { IGenericResponse } from '../../../interfaces/common';
-import { IPaginationOptions } from '../../../interfaces/pagination';
-import {
-  academicSemesterSearchableFields,
-  academicSemesterTitleCodeMapper,
-} from './academicSemester.constant';
-import {
-  IAcademicSemester,
-  IAcademicSemesterFilters,
-} from './academicSemester.interface';
-import { AcademicSemester } from './academicSemester.model';
+import { AcademicSemester, Prisma } from "@prisma/client";
+import { paginationHelpers } from "../../../helpers/paginationHelper";
+import { IGenericResponse } from "../../../interfaces/common";
+import { IPaginationOptions } from "../../../interfaces/pagination";
+import prisma from "../../../shared/prisma";
+import { IAcademicSemeterFilterRequest } from "./academicSemester.interface";
+import { AcademicSemesterSearchAbleFields } from "./academicSemeter.contants";
 
-const createSemester = async (
-  payload: IAcademicSemester
-): Promise<IAcademicSemester> => {
-  if (academicSemesterTitleCodeMapper[payload.title] !== payload.code) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid Semester Code');
-  }
-  const result = await AcademicSemester.create(payload);
-  return result;
-};
 
-const getSingleSemester = async (
-  id: string
-): Promise<IAcademicSemester | null> => {
-  const result = await AcademicSemester.findById(id);
-  return result;
-};
+const insertIntoDB = async (academicSemesterData: AcademicSemester): Promise<AcademicSemester> => {
+    const result = await prisma.academicSemester.create({
+        data: academicSemesterData
+    })
 
-const getAllsemesters = async (
-  filters: IAcademicSemesterFilters,
-  paginationOptions: IPaginationOptions
-): Promise<IGenericResponse<IAcademicSemester[]>> => {
-  // Extract searchTerm to implement search query
-  const { searchTerm, ...filtersData } = filters;
-  const { page, limit, skip, sortBy, sortOrder } =
-    paginationHelpers.calculatePagination(paginationOptions);
+    return result;
+}
 
-  const andConditions = [];
-  // Search needs $or for searching in specified fields
-  if (searchTerm) {
-    andConditions.push({
-      $or: academicSemesterSearchableFields.map(field => ({
-        [field]: {
-          $regex: searchTerm,
-          $options: 'i',
+const getAllFromDB = async (
+    filters: IAcademicSemeterFilterRequest,
+    options: IPaginationOptions
+): Promise<IGenericResponse<AcademicSemester[]>> => {
+    const { page, limit, skip } = paginationHelpers.calculatePagination(options);
+    const { searchTerm, ...filterData } = filters;
+    console.log(options)
+    const andConditons = [];
+
+    if (searchTerm) {
+        andConditons.push({
+            OR: AcademicSemesterSearchAbleFields.map((field) => ({
+                [field]: {
+                    contains: searchTerm,
+                    mode: 'insensitive'
+                }
+            }))
+        })
+    }
+
+    if (Object.keys(filterData).length > 0) {
+        andConditons.push({
+            AND: Object.keys(filterData).map((key) => ({
+                [key]: {
+                    equals: (filterData as any)[key]
+                }
+            }))
+        })
+    }
+
+    /**
+     * person = { name: 'fahim' }
+     * name = person[name]
+     * 
+     */
+
+    const whereConditons: Prisma.AcademicSemesterWhereInput =
+        andConditons.length > 0 ? { AND: andConditons } : {};
+
+    const result = await prisma.academicSemester.findMany({
+        where: whereConditons,
+        skip,
+        take: limit,
+        orderBy: options.sortBy && options.sortOrder
+            ? {
+                [options.sortBy]: options.sortOrder
+            }
+            : {
+                createdAt: 'desc'
+            }
+    });
+
+    const total = await prisma.academicSemester.count();
+
+    return {
+        meta: {
+            total,
+            page,
+            limit
         },
-      })),
+        data: result
+    }
+}
+
+const getDataById = async (id: string): Promise<AcademicSemester | null> => {
+    const result = await prisma.academicSemester.findUnique({
+        where: {
+            id
+        }
+    })
+
+    return result;
+}
+
+const updateOneInDB = async (
+    id: string,
+    payload: Partial<AcademicSemester>
+): Promise<AcademicSemester> => {
+    const result = await prisma.academicSemester.update({
+        where: {
+            id
+        },
+        data: payload
     });
-  }
+    return result;
+};
 
-  if (Object.keys(filtersData).length) {
-    andConditions.push({
-      $and: Object.entries(filtersData).map(([field, value]) => ({
-        [field]: value,
-      })),
+const deleteByIdFromDB = async (id: string): Promise<AcademicSemester> => {
+    const result = await prisma.academicSemester.delete({
+        where: {
+            id
+        }
     });
-  }
-
-  // Dynamic  Sort needs  field to  do sorting
-  const sortConditions: { [key: string]: SortOrder } = {};
-  if (sortBy && sortOrder) {
-    sortConditions[sortBy] = sortOrder;
-  }
-  const whereConditions =
-    andConditions.length > 0 ? { $and: andConditions } : {};
-
-  const result = await AcademicSemester.find(whereConditions)
-    .sort(sortConditions)
-    .skip(skip)
-    .limit(limit);
-
-  const total = await AcademicSemester.countDocuments();
-
-  return {
-    meta: {
-      page,
-      limit,
-      total,
-    },
-    data: result,
-  };
+    return result;
 };
 
-const updateSemester = async (
-  id: string,
-  payload: Partial<IAcademicSemester>
-): Promise<IAcademicSemester | null> => {
-  if (
-    payload.title &&
-    payload.code &&
-    academicSemesterTitleCodeMapper[payload.title] !== payload.code
-  ) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Invalid Semester Code');
-  }
-
-  const result = await AcademicSemester.findOneAndUpdate({ _id: id }, payload, {
-    new: true,
-  });
-  return result;
-};
-
-const deleteSemester = async (
-  id: string
-): Promise<IAcademicSemester | null> => {
-  const result = await AcademicSemester.findByIdAndDelete(id);
-  return result;
-};
 
 export const AcademicSemesterService = {
-  createSemester,
-  getSingleSemester,
-  getAllsemesters,
-  updateSemester,
-  deleteSemester,
-};
+    insertIntoDB,
+    getAllFromDB,
+    getDataById,
+    updateOneInDB,
+    deleteByIdFromDB
+}
