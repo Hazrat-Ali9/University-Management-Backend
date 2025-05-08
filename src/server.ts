@@ -3,7 +3,7 @@ import app from './app';
 import config from './config';
 import { errorlogger, logger } from './shared/logger';
 
-
+// Server ts
 async function bootstrap() {
 
   const server: Server = app.listen(config.port, () => {
