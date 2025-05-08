@@ -4,7 +4,7 @@ type IOptions = {
   sortBy?: string;
   sortOrder?: string;
 };
-
+// Pagination Helpers
 type IOptionsResult = {
   page: number;
   limit: number;
