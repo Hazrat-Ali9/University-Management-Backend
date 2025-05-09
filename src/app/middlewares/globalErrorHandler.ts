@@ -5,7 +5,7 @@ import { ErrorRequestHandler, NextFunction, Request, Response } from 'express';
 import config from '../../config';
 import ApiError from '../../errors/ApiError';
 import handleValidationError from '../../errors/handleValidationError';
-
+// Global Error Handler
 import { Prisma } from '@prisma/client';
 import { ZodError } from 'zod';
 import handleClientError from '../../errors/handleClientError';
