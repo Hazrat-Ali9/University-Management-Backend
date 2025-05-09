@@ -5,7 +5,7 @@ import { IPaginationOptions } from '../../../interfaces/pagination';
 import prisma from '../../../shared/prisma';
 import { academicDepartmentRelationalFields, academicDepartmentRelationalFieldsMapper, academicDepartmentSearchableFields } from './academicDepartment.contants';
 import { IAcademicDepartmentFilterRequest } from './academicDepartment.interface';
-
+// academic department service
 const insertIntoDB = async (data: AcademicDepartment): Promise<AcademicDepartment> => {
     const result = await prisma.academicDepartment.create({
         data,
