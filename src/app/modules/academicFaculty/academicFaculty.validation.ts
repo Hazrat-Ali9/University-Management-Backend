@@ -7,7 +7,7 @@ const create = z.object({
         })
     })
 });
-
+// academic faculty valid
 const update = z.object({
     body: z.object({
         title: z.string({
