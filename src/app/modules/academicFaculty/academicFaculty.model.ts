@@ -3,7 +3,7 @@ import {
   IAcademicFaculty,
   AcademicFacultyModel,
 } from './academicFaculty.interfaces';
-
+// academic Department Model
 const AcademicFacultySchema = new Schema<
   IAcademicFaculty,
   AcademicFacultyModel
