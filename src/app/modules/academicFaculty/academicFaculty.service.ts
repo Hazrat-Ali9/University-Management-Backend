@@ -7,7 +7,7 @@ import {
     academicFacultySearchableFields
 } from './academicFaculty.constants';
 import { IAcademicFacultyFilterRequest } from './academicFaculty.interface';
-
+// Faculty Service
 const insertIntoDB = async (data: AcademicFaculty): Promise<AcademicFaculty> => {
     const result = await prisma.academicFaculty.create({
         data
