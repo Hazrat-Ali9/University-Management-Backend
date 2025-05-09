@@ -7,7 +7,7 @@ import {
   acdemicSemesterMonths,
 } from './academicSemester.constant';
 import { IAcademicSemester } from './academicSemester.interface';
-
+// academic semester constats
 const academicSemesterSchema = new Schema<IAcademicSemester>(
   {
     title: {
