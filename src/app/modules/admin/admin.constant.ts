@@ -18,3 +18,4 @@ export const adminSearchableFields = [
   'name.lastName',
   'name.middleName',
 ];
+// admin constant
