@@ -7,7 +7,7 @@ import sendResponse from '../../../shared/sendResponse';
 import { adminFilterableFields } from './admin.constant';
 import { IAdmin } from './admin.interface';
 import { AdminService } from './admin.service';
-
+// Admin Controller
 const getSingleAdmin = catchAsync(async (req: Request, res: Response) => {
   const id = req.params.id;
   const result = await AdminService.getSingleAdmin(id);
