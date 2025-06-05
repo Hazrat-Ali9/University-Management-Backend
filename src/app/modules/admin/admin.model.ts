@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
 import { AdminModel, IAdmin } from './admin.interface';
-
+// admin model
 const AdminSchema = new Schema<IAdmin, AdminModel>(
   {
     id: {
