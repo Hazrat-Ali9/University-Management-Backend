@@ -5,7 +5,7 @@ import validateRequest from '../../middlewares/validateRequest';
 import { AdminController } from './admin.controller';
 import { AdminValidation } from './admin.validation';
 const router = express.Router();
-
+// admin route
 router.get(
   '/:id',
   auth(ENUM_USER_ROLE.SUPER_ADMIN, ENUM_USER_ROLE.ADMIN),
