@@ -1,5 +1,5 @@
 import { z } from 'zod';
-
+// admin Validation
 const updateAdmin = z.object({
   body: z.object({
     name: z.object({
