@@ -4,7 +4,7 @@ export type ILoginUser = {
   id: string;
   password: string;
 };
-
+//auth interface
 export type ILoginUserResponse = {
   accessToken: string;
   refreshToken?: string;
