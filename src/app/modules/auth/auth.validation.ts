@@ -1,5 +1,5 @@
 import { z } from 'zod';
-
+// auth validation
 const loginZodSchema = z.object({
   body: z.object({
     id: z.string({
