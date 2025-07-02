@@ -5,7 +5,7 @@ import pick from "../../../shared/pick";
 import sendResponse from "../../../shared/sendResponse";
 import { buildingFilterableFields } from "./building.constants";
 import { BuildingService } from "./building.service";
-
+// Buiding Controller
 const insertIntoDB = catchAsync(async (req: Request, res: Response) => {
     const result = await BuildingService.insertIntoDB(req.body);
     sendResponse(res, {
