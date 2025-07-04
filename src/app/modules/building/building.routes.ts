@@ -4,7 +4,7 @@ import auth from '../../middlewares/auth';
 import validateRequest from '../../middlewares/validateRequest';
 import { BuildingController } from './building.controller';
 import { BuildingValidations } from './building.validations';
-
+//building routes
 const router = express.Router();
 
 router.get('/', BuildingController.getAllFromDB);
