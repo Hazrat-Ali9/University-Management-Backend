@@ -6,7 +6,7 @@ import { IPaginationOptions } from "../../../interfaces/pagination";
 import prisma from "../../../shared/prisma";
 import { buildingSearchableFields } from "./building.constants";
 import { IBuildingFilterRequest } from "./building.interface";
-
+// building route
 const insertIntoDB = async (data: Building): Promise<Building> => {
     const result = await prisma.building.create({
         data
