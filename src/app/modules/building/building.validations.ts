@@ -7,7 +7,7 @@ const create = z.object({
         })
     })
 })
-
+// Building Validations
 const update = z.object({
     body: z.object({
         title: z.string({
