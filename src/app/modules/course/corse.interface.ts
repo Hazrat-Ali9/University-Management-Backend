@@ -4,7 +4,7 @@ export type ICourseCreateData = {
     credits: number,
     preRequisiteCourses: IPrerequisiteCourseRequest[]
 }
-
+// course interface
 export type IPrerequisiteCourseRequest = {
     courseId: string,
     isDeleted?: null
