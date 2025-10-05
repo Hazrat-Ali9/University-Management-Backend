@@ -5,7 +5,7 @@ import pick from "../../../shared/pick";
 import sendResponse from "../../../shared/sendResponse";
 import { courseFilterableFields } from "./course.constants";
 import { CourseService } from "./course.service";
-
+// course controller
 const insertIntoDB = catchAsync(async (req: Request, res: Response) => {
     //console.log(req.body)
     const result = await CourseService.insertIntoDB(req.body);
